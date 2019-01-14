@@ -15,7 +15,7 @@ if __debug__:
 
 VERSION = '0.01'
 
-EDSM_API = 'https://www.edsm.net/api-system-v1/bodies?systemName=%s'
+EDSM_API = 'https://www.edsm.net/api-system-v1/bodies?systemName=%s&systemId64=%s'
 
 this = sys.modules[__name__]  # For holding module globals
 this.frame = None
@@ -306,18 +306,19 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         update_frame()
         return
     elif entry['event'] in ['FSDJump', 'Location', 'StartUp']:
-        thread = threading.Thread(target=edsm_worker, name='EDSM lookup', args=(entry.get('StarSystem', system),))
+        thread = threading.Thread(target=edsm_worker, name='EDSM lookup',
+                                  args=(entry.get('StarSystem', system), entry.get('SystemAddress', '')))
         thread.daemon = True
         thread.start()
 
 
 # EDSM lookup
-def edsm_worker(system_name):
+def edsm_worker(system_name, system_id):
     if not this.edsm_session:
         this.edsm_session = requests.Session()
 
     try:
-        r = this.edsm_session.get(EDSM_API % urllib2.quote(system_name), timeout=10)
+        r = this.edsm_session.get(EDSM_API % (urllib2.quote(system_name), system_id), timeout=10)
         r.raise_for_status()
         this.edsm_data = r.json() or {}  # Unknown system represented as empty list
     except:
