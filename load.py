@@ -205,6 +205,9 @@ class Body:
                     edsm and entry.get('terraformingState') in [Terraformed, Candidate]) else False
             self.massEM = entry.get('MassEM') or 1.0 if not edsm else entry.get('earthMasses') or 1.0
 
+    def is_star_or_planet(self):
+        return self.isStar or self.isPlanet
+
     def calculate_value(self):
         if self.isStar:
 
@@ -302,8 +305,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     # print '\033[1;33m' + entry['event'] + '\033[0m'
     if entry['event'] == 'Scan':
         body = Body(entry)
-        update_body_list(body)
-        update_frame()
+        need_update = update_body_list(body)
+        if need_update:
+            update_frame()
         return
     elif entry['event'] in ['FSDJump', 'Location', 'StartUp']:
         thread = threading.Thread(target=edsm_worker, name='EDSM lookup',
@@ -351,14 +355,15 @@ def update_frame():
 
 
 def update_body_list(body):
-    if body is None or body.name is None:
-        return
+    if body is None or body.name is None or not body.is_star_or_planet():
+        return False
     for index, (name, value) in enumerate(this.body_lists):
         if body.name == name:
             this.body_lists[index] = (body.name, body.calculate_value())
-            return
+            return True
 
     this.body_lists.append((body.name, body.calculate_value()))
+    return True
 
 
 def reset_tabstop(event):
