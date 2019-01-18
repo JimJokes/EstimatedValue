@@ -358,7 +358,7 @@ def update_body_list(body):
     if body is None or body.name is None or not body.is_star_or_planet():
         return False
     for index, (name, value) in enumerate(this.body_lists):
-        if body.name == name:
+        if body.name.lower() == name.lower():
             this.body_lists[index] = (body.name, body.calculate_value())
             return True
 
@@ -370,6 +370,7 @@ def reset_tabstop(event):
     event.widget.configure(tabs=(event.width - 8, "right"))  # right-justified tab stop
 
 
+# test
 def test():
     thread = threading.Thread(target=edsm_worker, name='EDSM lookup', args=('Blu Thua EW-O b34-1',))
     thread.daemon = True
